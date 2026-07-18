@@ -45,6 +45,12 @@ npm run dev
 | `GET /api/properties/:id` | Property detail |
 | `PATCH /api/properties/:id` | Update property |
 | `DELETE /api/properties/:id` | Soft-delete property |
+| `GET /api/leads` | List/search/filter leads |
+| `POST /api/leads` | Create lead |
+| `GET /api/leads/:id` | Lead detail |
+| `PATCH /api/leads/:id` | Update lead |
+| `DELETE /api/leads/:id` | Soft-delete lead |
+| `POST /api/leads/:id/notes` | Add lead note |
 
 Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 
