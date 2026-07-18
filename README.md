@@ -61,6 +61,10 @@ npm run dev
 | `GET /api/notifications` | In-app notification inbox |
 | `POST /api/notifications/send` | Send in-app / email / WhatsApp |
 | `PATCH /api/notifications/:id/read` | Mark notification read |
+| `GET /api/ai/status` | Gemini configuration status |
+| `POST /api/ai/match-properties` | AI property matching |
+| `POST /api/ai/score-lead` | AI lead scoring (+ updates lead) |
+| `POST /api/ai/chat` | Text sales agent (Gemini) |
 
 Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 

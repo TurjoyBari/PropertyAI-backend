@@ -24,6 +24,7 @@ export default () => ({
     token: process.env.WHATSAPP_TOKEN,
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
   },
+  geminiApiKey: process.env.GEMINI_API_KEY,
   throttle: {
     /** Time window in milliseconds */
     ttl: parseInt(process.env.THROTTLE_TTL ?? '60000', 10),

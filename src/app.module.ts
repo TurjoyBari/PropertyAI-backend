@@ -16,6 +16,7 @@ import { ReportsModule } from './reports/reports.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AiModule } from './ai/ai.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
@@ -74,6 +75,7 @@ import { AppService } from './app.service';
     NotificationsModule,
     AuthFeatureModule,
     DashboardModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [
