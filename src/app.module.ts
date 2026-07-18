@@ -21,6 +21,7 @@ import { PublicModule } from './public/public.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { MessagesModule } from './messages/messages.module';
 import { AdminModule } from './admin/admin.module';
+import { AccountModule } from './account/account.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
@@ -84,6 +85,7 @@ import { AppService } from './app.service';
     FavoritesModule,
     MessagesModule,
     AdminModule,
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [
