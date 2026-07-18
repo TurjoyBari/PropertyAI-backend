@@ -50,3 +50,11 @@ export enum LeadSource {
   WALK_IN = 'walk_in',
   OTHER = 'other',
 }
+
+/** Site visit / property tour scheduling */
+export enum VisitStatus {
+  SCHEDULED = 'scheduled',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  NO_SHOW = 'no_show',
+}
