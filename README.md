@@ -7,6 +7,7 @@ NestJS REST API for **PropertyAI** — Real Estate AI Management System.
 - NestJS
 - TypeScript
 - REST API
+- MongoDB + Mongoose
 - `@nestjs/config` — environment configuration
 - `@nestjs/throttler` — rate limiting
 - `class-validator` / `class-transformer` — DTO validation
@@ -15,12 +16,22 @@ NestJS REST API for **PropertyAI** — Real Estate AI Management System.
 
 ```bash
 cp .env.example .env
+# Set MONGODB_URI in .env (Atlas or local)
 npm install
 npm run start:dev
 ```
 
 Health check: http://localhost:4000/health
 
+## Database collections (Milestone 3)
+
+| Collection | Purpose |
+|---|---|
+| `users` | Accounts, roles (admin/agent/user) |
+| `properties` | Listings with location, price, images |
+| `leads` | Pipeline leads, notes, assignment |
+
+CRUD APIs for these models come in later milestones.
 ## API response shape
 
 Success:

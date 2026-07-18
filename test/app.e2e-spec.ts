@@ -42,6 +42,7 @@ describe('AppController (e2e)', () => {
         expect(res.body.success).toBe(true);
         expect(res.body.data.status).toBe('ok');
         expect(res.body.data.service).toBe('propertyai-backend');
+        expect(res.body.data.database.status).toBe('connected');
       });
   });
 

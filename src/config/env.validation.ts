@@ -18,11 +18,21 @@ export function validateEnv(config: Record<string, unknown>) {
     );
   }
 
+  // Unit tests may run without a live database; e2e/dev/prod require a URI.
+  if (nodeEnv !== 'test' && !config.MONGODB_URI) {
+    throw new Error(
+      'MONGODB_URI is required. Copy .env.example to .env and set your Atlas/local URI.',
+    );
+  }
+
   return {
     ...config,
     PORT: port,
     NODE_ENV: nodeEnv,
     FRONTEND_URL: String(config.FRONTEND_URL ?? 'http://localhost:3000'),
+    MONGODB_URI: config.MONGODB_URI
+      ? String(config.MONGODB_URI)
+      : undefined,
     THROTTLE_TTL: Number(config.THROTTLE_TTL ?? 60000),
     THROTTLE_LIMIT: Number(config.THROTTLE_LIMIT ?? 100),
   };
