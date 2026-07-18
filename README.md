@@ -40,6 +40,11 @@ npm run dev
 | `GET /users/admin-check` | Admin-only RBAC demo |
 | `GET /users/staff-check` | Admin/Agent RBAC demo |
 | `GET /api/dashboard/stats` | Protected dashboard KPIs/charts/notifications |
+| `GET /api/properties` | List/search/filter properties |
+| `POST /api/properties` | Create property |
+| `GET /api/properties/:id` | Property detail |
+| `PATCH /api/properties/:id` | Update property |
+| `DELETE /api/properties/:id` | Soft-delete property |
 
 Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 
