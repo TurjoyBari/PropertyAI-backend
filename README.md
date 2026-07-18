@@ -39,6 +39,7 @@ npm run dev
 | `GET /users/me` | Protected profile (session required) |
 | `GET /users/admin-check` | Admin-only RBAC demo |
 | `GET /users/staff-check` | Admin/Agent RBAC demo |
+| `GET /api/dashboard/stats` | Protected dashboard KPIs/charts/notifications |
 
 Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 

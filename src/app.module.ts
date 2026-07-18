@@ -11,6 +11,7 @@ import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
 import { PropertiesModule } from './properties/properties.module';
 import { LeadsModule } from './leads/leads.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
@@ -64,6 +65,7 @@ import { AppService } from './app.service';
     PropertiesModule,
     LeadsModule,
     AuthFeatureModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
