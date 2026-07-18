@@ -33,6 +33,12 @@ export class PublicController {
   }
 
   @Public()
+  @Get('areas')
+  listAreas() {
+    return this.propertiesService.listAreas();
+  }
+
+  @Public()
   @Get('properties/:id')
   getProperty(@Param('id') id: string) {
     return this.propertiesService.findOne(id);

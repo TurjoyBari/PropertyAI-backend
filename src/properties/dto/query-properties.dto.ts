@@ -1,6 +1,6 @@
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PropertyStatus, PropertyType } from '../../common/enums';
+import { PropertyPurpose, PropertyStatus, PropertyType } from '../../common/enums';
 
 export class QueryPropertiesDto {
   @IsOptional()
@@ -16,8 +16,16 @@ export class QueryPropertiesDto {
   status?: PropertyStatus;
 
   @IsOptional()
+  @IsEnum(PropertyPurpose)
+  purpose?: PropertyPurpose;
+
+  @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  area?: string;
 
   @IsOptional()
   @Type(() => Number)
@@ -30,6 +38,12 @@ export class QueryPropertiesDto {
   @IsNumber()
   @Min(0)
   maxPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  bedrooms?: number;
 
   @IsOptional()
   @Type(() => Number)

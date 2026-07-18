@@ -88,7 +88,23 @@ export class AiService {
       .lean()
       .exec();
 
-    if (candidates.length === 0) {
+    // Soften filters if nothing matched — still return useful suggestions.
+    let pool = candidates;
+    if (pool.length === 0) {
+      const softFilter: Record<string, unknown> = {
+        isActive: true,
+        status: PropertyStatus.AVAILABLE,
+      };
+      if (dto.propertyType) softFilter.type = dto.propertyType;
+      pool = await this.propertyModel
+        .find(softFilter)
+        .sort({ updatedAt: -1 })
+        .limit(20)
+        .lean()
+        .exec();
+    }
+
+    if (pool.length === 0) {
       return {
         criteria: dto,
         matches: [],
@@ -98,7 +114,7 @@ export class AiService {
       };
     }
 
-    const catalog = candidates.map((p) => ({
+    const catalog = pool.map((p) => ({
       id: String(p._id),
       title: p.title,
       type: p.type,
@@ -113,12 +129,9 @@ export class AiService {
       description: p.description?.slice(0, 280),
     }));
 
-    const ai = await this.gemini.generateJson<MatchResult>(
-      'You are a real-estate matching assistant for Bangladesh/PropertyAI. Rank properties for the buyer criteria.',
-      `Buyer criteria:\n${JSON.stringify(dto, null, 2)}\n\nCandidate properties:\n${JSON.stringify(catalog, null, 2)}\n\nRespond with JSON:\n{\n  "matches": [{"propertyId":"...","matchScore":0-100,"reason":"...","highlights":["..."]}],\n  "alternatives": [{"propertyId":"...","matchScore":0-100,"reason":"..."}],\n  "summary":"..."\n}\nPick top 5 matches and up to 3 alternatives. Only use ids from the candidate list.`,
-    );
+    const ai = await this.rankWithGeminiOrFallback(dto, catalog);
 
-    const byId = new Map(candidates.map((p) => [String(p._id), p]));
+    const byId = new Map(pool.map((p) => [String(p._id), p]));
 
     const hydrate = (
       rows: Array<{ propertyId: string; matchScore: number; reason: string; highlights?: string[] }>,
@@ -139,6 +152,7 @@ export class AiService {
               currency: property.currency,
               bedrooms: property.bedrooms,
               bathrooms: property.bathrooms,
+              areaSqFt: property.areaSqFt,
               location: property.location,
               images: property.images?.slice(0, 1) ?? [],
             },
@@ -153,7 +167,104 @@ export class AiService {
         (ai.alternatives ?? []).map((row) => ({ ...row, highlights: [] })),
       ),
       summary: ai.summary,
-      mode: 'live' as const,
+      mode: ai.mode,
+    };
+  }
+
+  private async rankWithGeminiOrFallback(
+    dto: MatchPropertiesDto,
+    catalog: Array<Record<string, unknown>>,
+  ): Promise<MatchResult & { mode: 'live' | 'fallback' }> {
+    if (this.gemini.isConfigured()) {
+      try {
+        const ai = await this.gemini.generateJson<MatchResult>(
+          'You are a real-estate matching assistant for Bangladesh/PropertyAI. Rank properties for the buyer criteria.',
+          `Buyer criteria:\n${JSON.stringify(dto, null, 2)}\n\nCandidate properties:\n${JSON.stringify(catalog, null, 2)}\n\nRespond with JSON:\n{\n  "matches": [{"propertyId":"...","matchScore":0-100,"reason":"...","highlights":["..."]}],\n  "alternatives": [{"propertyId":"...","matchScore":0-100,"reason":"..."}],\n  "summary":"..."\n}\nPick top 5 matches and up to 3 alternatives. Only use ids from the candidate list.`,
+        );
+        return { ...ai, mode: 'live' };
+      } catch {
+        // Quota / network errors — continue with deterministic ranking.
+      }
+    }
+
+    return { ...this.heuristicRank(dto, catalog), mode: 'fallback' };
+  }
+
+  private heuristicRank(
+    dto: MatchPropertiesDto,
+    catalog: Array<Record<string, unknown>>,
+  ): MatchResult {
+    const scored = catalog
+      .map((p) => {
+        let score = 55;
+        const reasons: string[] = [];
+        const loc = String(dto.location || '').toLowerCase();
+        const area = String(p.area || '').toLowerCase();
+        const city = String(p.city || '').toLowerCase();
+        const title = String(p.title || '').toLowerCase();
+
+        if (loc) {
+          if (area.includes(loc) || city.includes(loc) || title.includes(loc)) {
+            score += 25;
+            reasons.push(`Strong location fit for ${dto.location}`);
+          } else {
+            score -= 10;
+          }
+        }
+
+        if (dto.bedrooms != null) {
+          const beds = Number(p.bedrooms) || 0;
+          if (beds >= dto.bedrooms) {
+            score += 12;
+            reasons.push(`${beds} bedrooms meet your ${dto.bedrooms}+ need`);
+          } else {
+            score -= 15;
+          }
+        }
+
+        if (dto.propertyType && p.type === dto.propertyType) {
+          score += 10;
+          reasons.push(`${dto.propertyType} type match`);
+        }
+
+        const price = Number(p.price) || 0;
+        if (dto.budgetMax != null) {
+          if (price <= dto.budgetMax) {
+            score += 12;
+            reasons.push('Within your budget');
+          } else if (price <= dto.budgetMax * 1.15) {
+            score += 4;
+            reasons.push('Slightly above budget but close');
+          } else {
+            score -= 20;
+          }
+        }
+        if (dto.budgetMin != null && price >= dto.budgetMin) {
+          score += 4;
+        }
+
+        score = Math.max(40, Math.min(98, score));
+        return {
+          propertyId: String(p.id),
+          matchScore: score,
+          reason:
+            reasons[0] ||
+            'Solid overall fit based on budget, beds, and location signals.',
+          highlights: reasons.slice(0, 3),
+        };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    const matches = scored.slice(0, 5);
+    const alternatives = scored.slice(5, 8).map(({ highlights: _h, ...rest }) => rest);
+
+    return {
+      matches,
+      alternatives,
+      summary:
+        matches.length > 0
+          ? `Found ${matches.length} strong matches from your criteria${this.gemini.isConfigured() ? ' (smart ranking while AI is busy)' : ''}.`
+          : 'No ranked matches available.',
     };
   }
 

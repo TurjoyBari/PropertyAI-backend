@@ -1,13 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
-import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { Roles, Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { UserRole } from '../common/enums';
 import { DashboardService } from './dashboard.service';
 
 @Controller('api/dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-  /** Authenticated dashboard summary used by the frontend home screen. */
+  /** Ops dashboard summary — agents and admins only. */
   @Get('stats')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   async getStats(@Session() session: UserSession) {
     const stats = await this.dashboardService.getStats();
     return {

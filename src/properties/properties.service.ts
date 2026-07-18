@@ -9,15 +9,19 @@ import { Property, PropertyDocument } from './schemas/property.schema';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertiesDto } from './dto/query-properties.dto';
-import { PropertyStatus, PropertyType, UserRole } from '../common/enums';
+import { PropertyPurpose, PropertyStatus, PropertyType, UserRole } from '../common/enums';
 
 type PropertyFilter = {
   isActive: boolean;
   type?: PropertyType;
   status?: PropertyStatus;
+  purpose?: PropertyPurpose | { $in: Array<PropertyPurpose | null> };
+  bedrooms?: { $gte: number };
   'location.city'?: RegExp;
+  'location.area'?: RegExp;
   price?: { $gte?: number; $lte?: number };
-  $or?: Array<Record<string, RegExp>>;
+  $or?: Array<Record<string, unknown>>;
+  $and?: Array<Record<string, unknown>>;
 };
 
 @Injectable()
@@ -31,6 +35,7 @@ export class PropertiesService {
     const property = await this.propertyModel.create({
       ...dto,
       status: dto.status ?? PropertyStatus.DRAFT,
+      purpose: dto.purpose ?? PropertyPurpose.SALE,
       currency: dto.currency ?? 'BDT',
       bedrooms: dto.bedrooms ?? 0,
       bathrooms: dto.bathrooms ?? 0,
@@ -54,14 +59,36 @@ export class PropertiesService {
 
     if (query.type) filter.type = query.type;
     if (query.status) filter.status = query.status;
+    if (query.purpose === PropertyPurpose.RENT) {
+      filter.purpose = PropertyPurpose.RENT;
+    } else if (query.purpose === PropertyPurpose.SALE) {
+      // Treat missing purpose on older docs as sale
+      filter.$and = [
+        ...(filter.$and ?? []),
+        {
+          $or: [
+            { purpose: PropertyPurpose.SALE },
+            { purpose: { $exists: false } },
+            { purpose: null },
+          ],
+        },
+      ];
+    }
     if (query.city) {
       filter['location.city'] = new RegExp(query.city, 'i');
+    }
+    if (query.area) {
+      filter['location.area'] = new RegExp(query.area, 'i');
     }
 
     if (query.minPrice != null || query.maxPrice != null) {
       filter.price = {};
       if (query.minPrice != null) filter.price.$gte = query.minPrice;
       if (query.maxPrice != null) filter.price.$lte = query.maxPrice;
+    }
+
+    if (query.bedrooms != null) {
+      filter.bedrooms = { $gte: query.bedrooms };
     }
 
     if (query.search?.trim()) {
@@ -93,6 +120,36 @@ export class PropertiesService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
+    };
+  }
+
+  async listAreas() {
+    const rows = await this.propertyModel
+      .aggregate<{ _id: string; count: number }>([
+        {
+          $match: {
+            isActive: true,
+            status: PropertyStatus.AVAILABLE,
+            'location.area': { $exists: true, $nin: [null, ''] },
+          },
+        },
+        {
+          $group: {
+            _id: '$location.area',
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1, _id: 1 } },
+      ])
+      .exec();
+
+    return {
+      items: rows
+        .map((row) => ({
+          name: String(row._id).trim(),
+          count: row.count,
+        }))
+        .filter((row) => row.name.length > 0),
     };
   }
 

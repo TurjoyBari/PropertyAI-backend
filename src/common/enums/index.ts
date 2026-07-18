@@ -25,6 +25,12 @@ export enum PropertyStatus {
   RENTED = 'rented',
 }
 
+/** Listing intent: for sale vs for rent */
+export enum PropertyPurpose {
+  SALE = 'sale',
+  RENT = 'rent',
+}
+
 /** Sales pipeline stages (Kanban) */
 export enum LeadStatus {
   NEW_LEAD = 'new_lead',

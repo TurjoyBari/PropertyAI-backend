@@ -18,6 +18,14 @@ export class FavoritesController {
     return this.favoritesService.list(session.user.id);
   }
 
+  @Get('check/:propertyId')
+  check(
+    @Param('propertyId') propertyId: string,
+    @Session() session: UserSession,
+  ) {
+    return this.favoritesService.isFavorite(session.user.id, propertyId);
+  }
+
   @Post()
   add(@Body() dto: AddFavoriteDto, @Session() session: UserSession) {
     return this.favoritesService.add(session.user.id, dto.propertyId);

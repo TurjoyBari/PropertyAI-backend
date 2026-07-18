@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PropertyStatus, PropertyType } from '../../common/enums';
+import { PropertyPurpose, PropertyStatus, PropertyType } from '../../common/enums';
 
 export class PropertyLocationDto {
   @IsString()
@@ -52,6 +52,10 @@ export class CreatePropertyDto {
   @IsOptional()
   @IsEnum(PropertyStatus)
   status?: PropertyStatus;
+
+  @IsOptional()
+  @IsEnum(PropertyPurpose)
+  purpose?: PropertyPurpose;
 
   @IsNumber()
   @Min(0)

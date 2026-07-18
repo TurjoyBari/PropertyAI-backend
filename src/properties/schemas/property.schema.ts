@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { PropertyStatus, PropertyType } from '../../common/enums';
+import { PropertyPurpose, PropertyStatus, PropertyType } from '../../common/enums';
 
 export type PropertyDocument = HydratedDocument<Property>;
 
@@ -41,6 +41,14 @@ export class Property {
 
   @Prop({ type: String, enum: PropertyStatus, default: PropertyStatus.DRAFT, index: true })
   status: PropertyStatus;
+
+  @Prop({
+    type: String,
+    enum: PropertyPurpose,
+    default: PropertyPurpose.SALE,
+    index: true,
+  })
+  purpose: PropertyPurpose;
 
   @Prop({ required: true, min: 0, index: true })
   price: number;

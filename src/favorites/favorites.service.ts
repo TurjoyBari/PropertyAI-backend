@@ -73,6 +73,16 @@ export class FavoritesService {
     return { deleted: true, propertyId };
   }
 
+  async isFavorite(userId: string, propertyId: string) {
+    const uid = this.requireId(userId, 'User');
+    const pid = this.requireId(propertyId, 'Property');
+    const exists = await this.favoriteModel.exists({
+      userId: uid,
+      property: pid,
+    });
+    return { propertyId, favorited: Boolean(exists) };
+  }
+
   private requireId(value: string, label: string) {
     if (!Types.ObjectId.isValid(value)) {
       throw new NotFoundException(`${label} not found`);

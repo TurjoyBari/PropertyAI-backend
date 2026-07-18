@@ -14,11 +14,13 @@ import { PropertyType } from '../../common/enums';
 
 export class MatchPropertiesDto {
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   budgetMin?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   budgetMax?: number;
@@ -28,6 +30,7 @@ export class MatchPropertiesDto {
   location?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   bedrooms?: number;
