@@ -25,6 +25,21 @@ export function validateEnv(config: Record<string, unknown>) {
     );
   }
 
+  if (nodeEnv !== 'test' && !config.BETTER_AUTH_SECRET) {
+    throw new Error(
+      'BETTER_AUTH_SECRET is required. Use a long random string (32+ chars).',
+    );
+  }
+
+  if (
+    (config.GOOGLE_CLIENT_ID && !config.GOOGLE_CLIENT_SECRET) ||
+    (!config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET)
+  ) {
+    throw new Error(
+      'Set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or leave both empty.',
+    );
+  }
+
   return {
     ...config,
     PORT: port,
@@ -32,6 +47,16 @@ export function validateEnv(config: Record<string, unknown>) {
     FRONTEND_URL: String(config.FRONTEND_URL ?? 'http://localhost:3000'),
     MONGODB_URI: config.MONGODB_URI
       ? String(config.MONGODB_URI)
+      : undefined,
+    BETTER_AUTH_SECRET: config.BETTER_AUTH_SECRET
+      ? String(config.BETTER_AUTH_SECRET)
+      : undefined,
+    BETTER_AUTH_URL: String(config.BETTER_AUTH_URL ?? 'http://localhost:4000'),
+    GOOGLE_CLIENT_ID: config.GOOGLE_CLIENT_ID
+      ? String(config.GOOGLE_CLIENT_ID)
+      : undefined,
+    GOOGLE_CLIENT_SECRET: config.GOOGLE_CLIENT_SECRET
+      ? String(config.GOOGLE_CLIENT_SECRET)
       : undefined,
     THROTTLE_TTL: Number(config.THROTTLE_TTL ?? 60000),
     THROTTLE_LIMIT: Number(config.THROTTLE_LIMIT ?? 100),

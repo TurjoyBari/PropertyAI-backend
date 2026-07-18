@@ -2,8 +2,11 @@ import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from '@thallesp/nestjs-better-auth';
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
+import { createAuth } from './auth/auth';
+import { AuthFeatureModule } from './auth/auth-feature.module';
 import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
 import { PropertiesModule } from './properties/properties.module';
@@ -31,10 +34,36 @@ import { AppService } from './app.service';
         },
       ],
     }),
+    AuthModule.forRootAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const auth = await createAuth({
+          mongodbUri: config.getOrThrow<string>('mongodbUri'),
+          secret: config.getOrThrow<string>('betterAuthSecret'),
+          baseURL: config.getOrThrow<string>('betterAuthUrl'),
+          frontendUrl: config.get<string>('frontendUrl', 'http://localhost:3000'),
+          nodeEnv: config.get<string>('nodeEnv', 'development'),
+          googleClientId: config.get<string>('googleClientId') || undefined,
+          googleClientSecret: config.get<string>('googleClientSecret') || undefined,
+        });
+
+        return {
+          auth,
+          bodyParser: {
+            json: { limit: '2mb' },
+            urlencoded: { limit: '2mb', extended: true },
+            rawBody: true,
+          },
+        };
+      },
+    }),
     DatabaseModule,
     UsersModule,
     PropertiesModule,
     LeadsModule,
+    AuthFeatureModule,
   ],
   controllers: [AppController],
   providers: [

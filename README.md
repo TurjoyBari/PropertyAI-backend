@@ -4,34 +4,53 @@ NestJS REST API for **PropertyAI** — Real Estate AI Management System.
 
 ## Stack
 
-- NestJS
-- TypeScript
-- REST API
+- NestJS + TypeScript
 - MongoDB + Mongoose
-- `@nestjs/config` — environment configuration
-- `@nestjs/throttler` — rate limiting
-- `class-validator` / `class-transformer` — DTO validation
+- Better Auth (email/password, Google OAuth ready, JWT, bearer, RBAC)
+- `@nestjs/config`, `@nestjs/throttler`, `class-validator`
 
 ## Getting Started
 
 ```bash
 cp .env.example .env
-# Set MONGODB_URI in .env (Atlas or local)
+# Set MONGODB_URI and BETTER_AUTH_SECRET (32+ random chars)
 npm install
-npm run start:dev
+npm run dev
 ```
 
-Health check: http://localhost:4000/health
+- Health: http://localhost:4000/health
+- Auth base: http://localhost:4000/api/auth
+- Auth route map: http://localhost:4000/users/auth-info
 
-## Database collections (Milestone 3)
+## Authentication (Milestone 4)
+
+| Endpoint | Description |
+|---|---|
+| `POST /api/auth/sign-up/email` | Register |
+| `POST /api/auth/sign-in/email` | Login (HTTP-only session cookie) |
+| `POST /api/auth/sign-out` | Logout |
+| `GET /api/auth/get-session` | Current session |
+| `POST /api/auth/request-password-reset` | Forgot password |
+| `POST /api/auth/reset-password` | Reset password with token |
+| `GET /api/auth/verify-email` | Email verification |
+| `POST /api/auth/sign-in/social` | Google OAuth (`provider: "google"`) when env keys set |
+| `GET /api/auth/token` | JWT access token |
+| `GET /api/auth/jwks` | JWKS for JWT verification |
+| `GET /users/me` | Protected profile (session required) |
+| `GET /users/admin-check` | Admin-only RBAC demo |
+| `GET /users/staff-check` | Admin/Agent RBAC demo |
+
+Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+
+Password reset / verification emails are **logged to the server console** until an email provider is wired.
+
+## Database collections
 
 | Collection | Purpose |
 |---|---|
-| `users` | Accounts, roles (admin/agent/user) |
-| `properties` | Listings with location, price, images |
-| `leads` | Pipeline leads, notes, assignment |
+| Better Auth: `user`, `session`, `account`, `verification`, `jwks` | Auth source of truth |
+| `users` / `properties` / `leads` | App domain models (CRUD later) |
 
-CRUD APIs for these models come in later milestones.
 ## API response shape
 
 Success:

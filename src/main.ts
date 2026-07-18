@@ -4,7 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  /**
+   * bodyParser: false — required by @thallesp/nestjs-better-auth so Better Auth
+   * can read the raw request body. The AuthModule re-adds parsers for other routes.
+   */
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
+
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
@@ -12,18 +19,11 @@ async function bootstrap() {
   const port = config.get<number>('port', 4000);
   const nodeEnv = config.get<string>('nodeEnv', 'development');
 
-  // Allow the Next.js frontend to call this API (cookies later need credentials).
   app.enableCors({
     origin: frontendUrl,
     credentials: true,
   });
 
-  /**
-   * Global validation:
-   * - whitelist: strip unknown properties
-   * - forbidNonWhitelisted: reject unknown properties with 400
-   * - transform: auto-convert payloads to DTO class instances
-   */
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -38,6 +38,7 @@ async function bootstrap() {
   logger.log(`PropertyAI API running on http://localhost:${port}`);
   logger.log(`Environment: ${nodeEnv}`);
   logger.log(`CORS origin: ${frontendUrl}`);
+  logger.log(`Auth endpoints: http://localhost:${port}/api/auth/*`);
 }
 
 bootstrap();
