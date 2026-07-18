@@ -8,7 +8,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { Roles, Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { UserRole } from '../common/enums';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
@@ -30,21 +31,25 @@ export class LeadsController {
   }
 
   @Post()
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   create(@Body() dto: CreateLeadDto) {
     return this.leadsService.create(dto);
   }
 
   @Patch(':id')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   update(@Param('id') id: string, @Body() dto: UpdateLeadDto) {
     return this.leadsService.update(id, dto);
   }
 
   @Delete(':id')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   remove(@Param('id') id: string) {
     return this.leadsService.remove(id);
   }
 
   @Post(':id/notes')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   addNote(
     @Param('id') id: string,
     @Body() dto: AddLeadNoteDto,

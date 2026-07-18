@@ -5,6 +5,7 @@ import { Lead, LeadSchema } from '../leads/schemas/lead.schema';
 import { Property, PropertySchema } from '../properties/schemas/property.schema';
 import { VisitsController } from './visits.controller';
 import { VisitsService } from './visits.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { VisitsService } from './visits.service';
       { name: Lead.name, schema: LeadSchema },
       { name: Property.name, schema: PropertySchema },
     ]),
+    NotificationsModule,
   ],
   controllers: [VisitsController],
   providers: [VisitsService],

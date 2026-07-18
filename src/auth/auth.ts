@@ -82,7 +82,8 @@ export async function createAuth(options: CreateAuthOptions) {
     plugins: [
       // Provides user.role used by @Roles() from nestjs-better-auth
       admin({
-        defaultRole: UserRole.USER,
+        // Agents are the primary CRM operators; elevate to admin in DB when needed.
+        defaultRole: UserRole.AGENT,
         adminRoles: [UserRole.ADMIN],
       }),
       // Short-lived JWT access tokens + JWKS endpoint

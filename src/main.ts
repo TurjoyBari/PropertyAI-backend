@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -8,7 +10,7 @@ async function bootstrap() {
    * bodyParser: false — required by @thallesp/nestjs-better-auth so Better Auth
    * can read the raw request body. The AuthModule re-adds parsers for other routes.
    */
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
 
@@ -18,6 +20,10 @@ async function bootstrap() {
   const frontendUrl = config.get<string>('frontendUrl', 'http://localhost:3000');
   const port = config.get<number>('port', 4000);
   const nodeEnv = config.get<string>('nodeEnv', 'development');
+
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   app.enableCors({
     origin: frontendUrl,
@@ -39,6 +45,7 @@ async function bootstrap() {
   logger.log(`Environment: ${nodeEnv}`);
   logger.log(`CORS origin: ${frontendUrl}`);
   logger.log(`Auth endpoints: http://localhost:${port}/api/auth/*`);
+  logger.log(`Uploads served at http://localhost:${port}/uploads/`);
 }
 
 bootstrap();

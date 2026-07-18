@@ -56,6 +56,11 @@ npm run dev
 | `GET /api/visits/:id` | Visit detail |
 | `PATCH /api/visits/:id` | Update visit |
 | `DELETE /api/visits/:id` | Soft-delete / cancel visit |
+| `GET /api/reports/summary` | Revenue, sales, sources, agent performance |
+| `POST /api/uploads/images` | Multipart property image upload |
+| `GET /api/notifications` | In-app notification inbox |
+| `POST /api/notifications/send` | Send in-app / email / WhatsApp |
+| `PATCH /api/notifications/:id/read` | Mark notification read |
 
 Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 
@@ -66,7 +71,7 @@ Password reset / verification emails are **logged to the server console** until 
 | Collection | Purpose |
 |---|---|
 | Better Auth: `user`, `session`, `account`, `verification`, `jwks` | Auth source of truth |
-| `users` / `properties` / `leads` / `visits` | App domain models |
+| `users` / `properties` / `leads` / `visits` / `notifications` | App domain models |
 
 ## API response shape
 

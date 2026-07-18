@@ -12,6 +12,7 @@ import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
 import { QueryVisitsDto } from './dto/query-visits.dto';
 import { LeadStatus, VisitStatus } from '../common/enums';
+import { NotificationsService } from '../notifications/notifications.service';
 
 type VisitFilter = {
   isActive: boolean;
@@ -31,6 +32,7 @@ export class VisitsService {
     private readonly leadModel: Model<LeadDocument>,
     @InjectModel(Property.name)
     private readonly propertyModel: Model<PropertyDocument>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(dto: CreateVisitDto, userId: string) {
@@ -57,6 +59,12 @@ export class VisitsService {
     if (status === VisitStatus.SCHEDULED) {
       await this.bumpLeadToVisitScheduled(leadId);
     }
+
+    await this.notificationsService.notifyInApp({
+      userId,
+      title: 'Site visit scheduled',
+      body: `Visit booked for ${new Date(dto.scheduledAt).toLocaleString()}`,
+    });
 
     return this.findOne(visit.id);
   }

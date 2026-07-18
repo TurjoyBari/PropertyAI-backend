@@ -12,6 +12,9 @@ import { UsersModule } from './users/users.module';
 import { PropertiesModule } from './properties/properties.module';
 import { LeadsModule } from './leads/leads.module';
 import { VisitsModule } from './visits/visits.module';
+import { ReportsModule } from './reports/reports.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
@@ -66,6 +69,9 @@ import { AppService } from './app.service';
     PropertiesModule,
     LeadsModule,
     VisitsModule,
+    ReportsModule,
+    UploadsModule,
+    NotificationsModule,
     AuthFeatureModule,
     DashboardModule,
   ],

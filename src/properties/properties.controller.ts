@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { Roles, Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import { UserRole } from '../common/enums';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -30,6 +30,7 @@ export class PropertiesController {
   }
 
   @Post()
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   create(
     @Body() dto: CreatePropertyDto,
     @Session() session: UserSession,
@@ -38,6 +39,7 @@ export class PropertiesController {
   }
 
   @Patch(':id')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   update(
     @Param('id') id: string,
     @Body() dto: UpdatePropertyDto,
@@ -48,6 +50,7 @@ export class PropertiesController {
   }
 
   @Delete(':id')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   remove(@Param('id') id: string, @Session() session: UserSession) {
     const role = (session.user as { role?: string }).role ?? UserRole.USER;
     return this.propertiesService.remove(id, session.user.id, role);

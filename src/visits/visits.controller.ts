@@ -8,7 +8,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { Roles, Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { UserRole } from '../common/enums';
 import { VisitsService } from './visits.service';
 import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
@@ -29,16 +30,19 @@ export class VisitsController {
   }
 
   @Post()
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   create(@Body() dto: CreateVisitDto, @Session() session: UserSession) {
     return this.visitsService.create(dto, session.user.id);
   }
 
   @Patch(':id')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   update(@Param('id') id: string, @Body() dto: UpdateVisitDto) {
     return this.visitsService.update(id, dto);
   }
 
   @Delete(':id')
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
   remove(@Param('id') id: string) {
     return this.visitsService.remove(id);
   }
