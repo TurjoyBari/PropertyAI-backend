@@ -29,4 +29,5 @@ Thumbs.db
 *.tsbuildinfo
 .tmp/
 temp/
-uploads/
+# Local uploaded images (runtime)
+/uploads/
