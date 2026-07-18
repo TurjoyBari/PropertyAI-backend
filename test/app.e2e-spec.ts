@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -13,6 +13,13 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     await app.init();
   });
 
@@ -21,8 +28,9 @@ describe('AppController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect((res) => {
-        expect(res.body.status).toBe('ok');
-        expect(res.body.name).toBe('PropertyAI API');
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.status).toBe('ok');
+        expect(res.body.data.name).toBe('PropertyAI API');
       });
   });
 
@@ -31,8 +39,9 @@ describe('AppController (e2e)', () => {
       .get('/health')
       .expect(200)
       .expect((res) => {
-        expect(res.body.status).toBe('ok');
-        expect(res.body.service).toBe('propertyai-backend');
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.status).toBe('ok');
+        expect(res.body.data.service).toBe('propertyai-backend');
       });
   });
 
