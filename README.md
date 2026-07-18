@@ -65,6 +65,13 @@ npm run dev
 | `POST /api/ai/match-properties` | AI property matching |
 | `POST /api/ai/score-lead` | AI lead scoring (+ updates lead) |
 | `POST /api/ai/chat` | Text sales agent (Gemini) |
+| `GET /api/public/properties` | Public listings |
+| `POST /api/public/inquiries` | Public contact → lead (+ auto score) |
+| `POST /api/public/match-properties` | Public AI matching |
+| `GET/POST/DELETE /api/favorites` | Customer saved properties |
+| `GET/POST /api/messages` | Customer ↔ agent messages |
+| `GET /api/admin/users` | Admin user list |
+| `PATCH /api/admin/users/:id/role` | Admin role update |
 
 Sessions use **HTTP-only cookies**. JWT access tokens expire in **15 minutes**. Google login activates when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 

@@ -30,7 +30,7 @@ export class VisitsController {
   }
 
   @Post()
-  @Roles([UserRole.ADMIN, UserRole.AGENT])
+  @Roles([UserRole.ADMIN, UserRole.AGENT, UserRole.USER])
   create(@Body() dto: CreateVisitDto, @Session() session: UserSession) {
     return this.visitsService.create(dto, session.user.id);
   }
