@@ -49,7 +49,15 @@ export async function createAuth(options: CreateAuthOptions) {
     database: mongodbAdapter(db, { client }),
     secret: options.secret,
     baseURL: options.baseURL,
-    trustedOrigins: [options.frontendUrl],
+    trustedOrigins: [
+      options.frontendUrl,
+      // Allow Vercel production aliases for this project.
+      'https://property-ai-frontend-vert.vercel.app',
+      'https://property-ai-frontend.vercel.app',
+      'https://property-ai-frontend-turjoybari-turjoybaris-projects.vercel.app',
+      'https://property-ai-frontend-turjoybaris-projects.vercel.app',
+      'https://property-ai-backend-six.vercel.app',
+    ].filter((value, index, all) => Boolean(value) && all.indexOf(value) === index),
     emailAndPassword: {
       enabled: true,
       // Turn on after SMTP is configured; verification emails still log in dev.
