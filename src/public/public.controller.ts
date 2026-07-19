@@ -11,7 +11,7 @@ import { PropertiesService } from '../properties/properties.service';
 import { LeadsService } from '../leads/leads.service';
 import { AiService } from '../ai/ai.service';
 import { QueryPropertiesDto } from '../properties/dto/query-properties.dto';
-import { MatchPropertiesDto } from '../ai/dto/ai.dto';
+import { MatchPropertiesDto, ChatAgentDto } from '../ai/dto/ai.dto';
 import { CreatePublicInquiryDto } from './dto/create-public-inquiry.dto';
 import { LeadSource, LeadStatus, PropertyStatus } from '../common/enums';
 
@@ -51,6 +51,12 @@ export class PublicController {
   }
 
   @Public()
+  @Post('chat')
+  chat(@Body() dto: ChatAgentDto) {
+    return this.aiService.chatAgent(dto);
+  }
+
+  @Public()
   @Post('inquiries')
   async createInquiry(@Body() dto: CreatePublicInquiryDto) {
     const lead = await this.leadsService.create({
@@ -71,7 +77,7 @@ export class PublicController {
         (lead as { id?: unknown }).id,
     );
 
-    // Fire-and-forget scoring when Gemini is configured.
+    // Fire-and-forget CRM summary — never blocks inquiry create.
     void this.aiService.scoreLead({ leadId }).catch(() => undefined);
 
     return {
@@ -87,7 +93,7 @@ export class PublicController {
       items: [
         {
           q: 'How does AI Property Finder work?',
-          a: 'Tell us your budget, location, and bedrooms. Gemini ranks matching listings with scores and reasons.',
+          a: 'Describe what you need in plain language. AI extracts filters only; we always search our MongoDB listings. If AI is offline, standard search still works.',
         },
         {
           q: 'Can I book a site visit online?',
@@ -95,7 +101,7 @@ export class PublicController {
         },
         {
           q: 'Is PropertyAI free to browse?',
-          a: 'Browsing listings and using the AI finder is free. Agents manage deals from the staff workspace.',
+          a: 'Browsing listings and using the property finder is free. Agents manage deals from the staff workspace.',
         },
         {
           q: 'How do I contact an agent?',
