@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { Roles } from '@thallesp/nestjs-better-auth';
+import { Roles, Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import { UserRole } from '../common/enums';
 import { ReportsService } from './reports.service';
 
@@ -9,7 +9,11 @@ export class ReportsController {
 
   @Get('summary')
   @Roles([UserRole.ADMIN, UserRole.AGENT, UserRole.USER])
-  getSummary() {
-    return this.reportsService.getSummary();
+  getSummary(@Session() session: UserSession) {
+    const role = (session.user as { role?: string }).role ?? UserRole.USER;
+    return this.reportsService.getSummary({
+      id: session.user.id,
+      role,
+    });
   }
 }

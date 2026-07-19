@@ -11,12 +11,18 @@ import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertiesDto } from './dto/query-properties.dto';
 import { PropertyPurpose, PropertyStatus, PropertyType, UserRole } from '../common/enums';
 
+export type PropertyActor = {
+  id: string;
+  role: string;
+};
+
 type PropertyFilter = {
   isActive: boolean;
   type?: PropertyType;
   status?: PropertyStatus;
   purpose?: PropertyPurpose | { $in: Array<PropertyPurpose | null> };
   bedrooms?: { $gte: number };
+  listedBy?: Types.ObjectId;
   'location.city'?: RegExp;
   'location.area'?: RegExp;
   price?: { $gte?: number; $lte?: number };
@@ -39,23 +45,40 @@ export class PropertiesService {
       currency: dto.currency ?? 'BDT',
       bedrooms: dto.bedrooms ?? 0,
       bathrooms: dto.bathrooms ?? 0,
+      parking: dto.parking ?? 0,
       images: dto.images ?? [],
       amenities: dto.amenities ?? [],
       listedBy: Types.ObjectId.isValid(userId)
         ? new Types.ObjectId(userId)
         : undefined,
       isActive: true,
+      activityLog: [
+        {
+          userId,
+          role: 'agent',
+          action: 'Agent created property',
+          at: new Date(),
+        },
+      ],
     });
 
     return property.toObject();
   }
 
-  async findAll(query: QueryPropertiesDto) {
+  /**
+   * List properties. When `actor` is an agent, results are scoped to `listedBy`.
+   * Admins / public (no actor) see the full active catalog (subject to query filters).
+   */
+  async findAll(query: QueryPropertiesDto, actor?: PropertyActor) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 12;
     const skip = (page - 1) * limit;
 
     const filter: PropertyFilter = { isActive: true };
+
+    if (actor?.role === UserRole.AGENT && Types.ObjectId.isValid(actor.id)) {
+      filter.listedBy = new Types.ObjectId(actor.id);
+    }
 
     if (query.type) filter.type = query.type;
     if (query.status) filter.status = query.status;
@@ -112,13 +135,17 @@ export class PropertiesService {
       this.propertyModel.countDocuments(filter as never),
     ]);
 
+    const totalPages = Math.ceil(total / limit);
+
     return {
       items,
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.max(1, Math.ceil(total / limit)),
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1 && total > 0,
       },
     };
   }
@@ -153,7 +180,7 @@ export class PropertiesService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, actor?: PropertyActor) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Property not found');
     }
@@ -165,6 +192,23 @@ export class PropertiesService {
 
     if (!property) {
       throw new NotFoundException('Property not found');
+    }
+
+    if (actor) {
+      this.assertCanView(property, actor.id, actor.role);
+    }
+
+    if (actor?.role !== UserRole.ADMIN) {
+      const {
+        adminNotes: _n,
+        activityLog: _a,
+        documents: _d,
+        suggestedPrice: _s,
+        finalPrice: _f,
+        commissionPercent: _c,
+        ...safe
+      } = property as typeof property & Record<string, unknown>;
+      return safe;
     }
 
     return property;
@@ -180,6 +224,16 @@ export class PropertiesService {
     this.assertCanMutate(property, userId, role);
 
     Object.assign(property, dto);
+    property.lastUpdatedBy = Types.ObjectId.isValid(userId)
+      ? new Types.ObjectId(userId)
+      : property.lastUpdatedBy;
+    property.activityLog = property.activityLog || [];
+    property.activityLog.push({
+      userId,
+      role: role === UserRole.ADMIN ? 'admin' : 'agent',
+      action: 'Property details updated',
+      at: new Date(),
+    });
     await property.save();
     return property.toObject();
   }
@@ -189,6 +243,18 @@ export class PropertiesService {
     this.assertCanMutate(property, userId, role);
 
     property.isActive = false;
+    if (Types.ObjectId.isValid(userId)) {
+      property.deletedBy = new Types.ObjectId(userId);
+      property.deletedAt = new Date();
+      property.lastUpdatedBy = new Types.ObjectId(userId);
+    }
+    property.activityLog = property.activityLog || [];
+    property.activityLog.push({
+      userId,
+      role: role === UserRole.ADMIN ? 'admin' : 'agent',
+      action: 'Property soft-deleted',
+      at: new Date(),
+    });
     await property.save();
 
     return { id: property.id, deleted: true };
@@ -211,6 +277,20 @@ export class PropertiesService {
     return property;
   }
 
+  private assertCanView(
+    property: { listedBy?: Types.ObjectId | string | null },
+    userId: string,
+    role: string,
+  ) {
+    if (role === UserRole.ADMIN) return;
+    if (role !== UserRole.AGENT) return;
+
+    const ownerId = property.listedBy?.toString();
+    if (ownerId && ownerId === userId) return;
+
+    throw new ForbiddenException('You cannot access this property');
+  }
+
   private assertCanMutate(
     property: PropertyDocument,
     userId: string,
@@ -219,7 +299,7 @@ export class PropertiesService {
     if (role === UserRole.ADMIN) return;
 
     const ownerId = property.listedBy?.toString();
-    if (!ownerId || ownerId === userId) return;
+    if (ownerId && ownerId === userId) return;
 
     throw new ForbiddenException('You cannot modify this property');
   }

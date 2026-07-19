@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { Roles, Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import { UserRole } from '../common/enums';
-import { PropertiesService } from './properties.service';
+import { PropertiesService, type PropertyActor } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertiesDto } from './dto/query-properties.dto';
@@ -20,13 +20,18 @@ export class PropertiesController {
   constructor(private readonly propertiesService: PropertiesService) {}
 
   @Get()
-  findAll(@Query() query: QueryPropertiesDto) {
-    return this.propertiesService.findAll(query);
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
+  findAll(
+    @Query() query: QueryPropertiesDto,
+    @Session() session: UserSession,
+  ) {
+    return this.propertiesService.findAll(query, this.toActor(session));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.propertiesService.findOne(id);
+  @Roles([UserRole.ADMIN, UserRole.AGENT])
+  findOne(@Param('id') id: string, @Session() session: UserSession) {
+    return this.propertiesService.findOne(id, this.toActor(session));
   }
 
   @Post()
@@ -54,5 +59,12 @@ export class PropertiesController {
   remove(@Param('id') id: string, @Session() session: UserSession) {
     const role = (session.user as { role?: string }).role ?? UserRole.USER;
     return this.propertiesService.remove(id, session.user.id, role);
+  }
+
+  private toActor(session: UserSession): PropertyActor {
+    return {
+      id: session.user.id,
+      role: (session.user as { role?: string }).role ?? UserRole.USER,
+    };
   }
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Property, PropertyDocument } from '../properties/schemas/property.schema';
 import { Lead, LeadDocument } from '../leads/schemas/lead.schema';
-import { LeadStatus, PropertyStatus } from '../common/enums';
+import { LeadStatus, PropertyStatus, UserRole } from '../common/enums';
 
 @Injectable()
 export class DashboardService {
@@ -14,24 +14,34 @@ export class DashboardService {
     private readonly leadModel: Model<LeadDocument>,
   ) {}
 
-  async getStats() {
+  async getStats(actor?: { id: string; role: string }) {
+    const propertyFilter: Record<string, unknown> = { isActive: true };
+    if (actor?.role === UserRole.AGENT && Types.ObjectId.isValid(actor.id)) {
+      propertyFilter.listedBy = new Types.ObjectId(actor.id);
+    }
+
+    const leadFilter: Record<string, unknown> = { isActive: true };
+    if (actor?.role === UserRole.AGENT && Types.ObjectId.isValid(actor.id)) {
+      leadFilter.assignedAgent = new Types.ObjectId(actor.id);
+    }
+
     const [
       totalProperties,
       availableProperties,
       activeLeads,
       closedLeads,
     ] = await Promise.all([
-      this.propertyModel.countDocuments({ isActive: true }),
+      this.propertyModel.countDocuments(propertyFilter),
       this.propertyModel.countDocuments({
-        isActive: true,
+        ...propertyFilter,
         status: PropertyStatus.AVAILABLE,
       }),
       this.leadModel.countDocuments({
-        isActive: true,
+        ...leadFilter,
         status: { $ne: LeadStatus.CLOSED },
       }),
       this.leadModel.countDocuments({
-        isActive: true,
+        ...leadFilter,
         status: LeadStatus.CLOSED,
       }),
     ]);

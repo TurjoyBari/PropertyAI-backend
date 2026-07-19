@@ -11,14 +11,18 @@ export class DashboardController {
   @Get('stats')
   @Roles([UserRole.ADMIN, UserRole.AGENT])
   async getStats(@Session() session: UserSession) {
-    const stats = await this.dashboardService.getStats();
+    const role = (session.user as { role?: string }).role ?? UserRole.USER;
+    const stats = await this.dashboardService.getStats({
+      id: session.user.id,
+      role,
+    });
     return {
       ...stats,
       viewer: {
         id: session.user.id,
         name: session.user.name,
         email: session.user.email,
-        role: (session.user as { role?: string }).role ?? 'user',
+        role,
       },
     };
   }

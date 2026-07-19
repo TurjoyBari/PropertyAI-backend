@@ -78,6 +78,83 @@ export class Property {
   @Prop({ type: Types.ObjectId, ref: 'User', index: true })
   listedBy?: Types.ObjectId;
 
+  @Prop({ min: 0, default: 0 })
+  parking?: number;
+
+  @Prop({ default: false, index: true })
+  featured?: boolean;
+
+  /** Admin-only private notes */
+  @Prop({ trim: true })
+  adminNotes?: string;
+
+  @Prop({ type: [String], default: [] })
+  internalTags?: string[];
+
+  @Prop({ min: 0 })
+  suggestedPrice?: number;
+
+  @Prop({ min: 0 })
+  finalPrice?: number;
+
+  @Prop({ min: 0, max: 100 })
+  commissionPercent?: number;
+
+  @Prop({
+    type: [
+      {
+        name: { type: String, required: true },
+        url: { type: String },
+        uploadedAt: { type: Date, default: Date.now },
+        verified: { type: Boolean, default: false },
+      },
+    ],
+    default: [],
+  })
+  documents?: Array<{
+    name: string;
+    url?: string;
+    uploadedAt?: Date;
+    verified?: boolean;
+  }>;
+
+  @Prop({
+    type: [
+      {
+        userId: { type: String },
+        userName: { type: String },
+        role: { type: String },
+        action: { type: String, required: true },
+        at: { type: Date, default: Date.now },
+        ip: { type: String },
+      },
+    ],
+    default: [],
+  })
+  activityLog?: Array<{
+    userId?: string;
+    userName?: string;
+    role?: string;
+    action: string;
+    at?: Date;
+    ip?: string;
+  }>;
+
+  @Prop({ type: Types.ObjectId })
+  approvedBy?: Types.ObjectId;
+
+  @Prop()
+  approvedAt?: Date;
+
+  @Prop({ type: Types.ObjectId })
+  deletedBy?: Types.ObjectId;
+
+  @Prop()
+  deletedAt?: Date;
+
+  @Prop({ type: Types.ObjectId })
+  lastUpdatedBy?: Types.ObjectId;
+
   @Prop({ default: true })
   isActive: boolean;
 }

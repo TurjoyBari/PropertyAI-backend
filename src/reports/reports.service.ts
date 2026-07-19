@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Property, PropertyDocument } from '../properties/schemas/property.schema';
 import { Lead, LeadDocument } from '../leads/schemas/lead.schema';
 import { Visit, VisitDocument } from '../visits/schemas/visit.schema';
-import { LeadStatus, PropertyStatus } from '../common/enums';
+import { LeadStatus, PropertyStatus, UserRole } from '../common/enums';
 import { estimateRevenue, salesCount } from './reports.helpers';
 
 @Injectable()
@@ -18,7 +18,20 @@ export class ReportsService {
     private readonly visitModel: Model<VisitDocument>,
   ) {}
 
-  async getSummary() {
+  async getSummary(actor?: { id: string; role: string }) {
+    const isAgent =
+      actor?.role === UserRole.AGENT && Types.ObjectId.isValid(actor.id);
+    const agentOid = isAgent ? new Types.ObjectId(actor!.id) : null;
+
+    const propertyMatch: Record<string, unknown> = { isActive: true };
+    if (agentOid) propertyMatch.listedBy = agentOid;
+
+    const leadMatch: Record<string, unknown> = { isActive: true };
+    if (agentOid) leadMatch.assignedAgent = agentOid;
+
+    const visitMatch: Record<string, unknown> = { isActive: true };
+    if (agentOid) visitMatch.assignedAgent = agentOid;
+
     const [
       closedLeads,
       soldProperties,
@@ -30,56 +43,65 @@ export class ReportsService {
       monthlyClosed,
     ] = await Promise.all([
       this.leadModel.countDocuments({
-        isActive: true,
+        ...leadMatch,
         status: LeadStatus.CLOSED,
       }),
       this.propertyModel.countDocuments({
-        isActive: true,
+        ...propertyMatch,
         status: PropertyStatus.SOLD,
       }),
       this.propertyModel.aggregate<{ total: number }>([
         {
           $match: {
-            isActive: true,
+            ...propertyMatch,
             status: { $in: [PropertyStatus.SOLD, PropertyStatus.RENTED] },
           },
         },
         { $group: { _id: null, total: { $sum: '$price' } } },
       ]),
       this.leadModel.aggregate<{ _id: string; count: number }>([
-        { $match: { isActive: true } },
+        { $match: leadMatch },
         { $group: { _id: '$source', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.leadModel.aggregate<{ _id: string; count: number }>([
-        { $match: { isActive: true } },
+        { $match: leadMatch },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
-      this.leadModel.aggregate<{
-        _id: string | null;
-        leads: number;
-        closed: number;
-      }>([
-        { $match: { isActive: true, assignedAgent: { $exists: true, $ne: null } } },
-        {
-          $group: {
-            _id: '$assignedAgent',
-            leads: { $sum: 1 },
-            closed: {
-              $sum: {
-                $cond: [{ $eq: ['$status', LeadStatus.CLOSED] }, 1, 0],
+      isAgent
+        ? Promise.resolve(
+            [] as Array<{ _id: string | null; leads: number; closed: number }>,
+          )
+        : this.leadModel.aggregate<{
+            _id: string | null;
+            leads: number;
+            closed: number;
+          }>([
+            {
+              $match: {
+                isActive: true,
+                assignedAgent: { $exists: true, $ne: null },
               },
             },
-          },
-        },
-        { $sort: { closed: -1, leads: -1 } },
-        { $limit: 10 },
-      ]),
+            {
+              $group: {
+                _id: '$assignedAgent',
+                leads: { $sum: 1 },
+                closed: {
+                  $sum: {
+                    $cond: [{ $eq: ['$status', LeadStatus.CLOSED] }, 1, 0],
+                  },
+                },
+              },
+            },
+            { $sort: { closed: -1, leads: -1 } },
+            { $limit: 10 },
+          ]),
       this.visitModel.aggregate<{ _id: string; count: number }>([
-        { $match: { isActive: true } },
+        { $match: visitMatch },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
-      this.closedLeadsByMonth(),
+      this.closedLeadsByMonth(leadMatch),
     ]);
 
     const revenue = estimateRevenue({
@@ -125,7 +147,7 @@ export class ReportsService {
     };
   }
 
-  private async closedLeadsByMonth() {
+  private async closedLeadsByMonth(leadMatch: Record<string, unknown>) {
     const start = new Date();
     start.setMonth(start.getMonth() - 5);
     start.setDate(1);
@@ -137,7 +159,7 @@ export class ReportsService {
     }>([
       {
         $match: {
-          isActive: true,
+          ...leadMatch,
           status: LeadStatus.CLOSED,
           updatedAt: { $gte: start },
         },

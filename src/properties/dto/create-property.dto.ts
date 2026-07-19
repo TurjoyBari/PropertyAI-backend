@@ -93,4 +93,9 @@ export class CreatePropertyDto {
   @IsArray()
   @IsString({ each: true })
   amenities?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  parking?: number;
 }
