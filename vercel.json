@@ -1,22 +1,3 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "builds": [
-    {
-      "src": "dist/vercel.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["dist/**", "uploads/**"],
-        "maxDuration": 60
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "dist/vercel.js",
-      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }

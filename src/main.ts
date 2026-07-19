@@ -14,8 +14,10 @@ async function bootstrap() {
   });
 
   const logger = new Logger('Bootstrap');
-  const { frontendUrl, port, nodeEnv } = configureApp(app);
+  const { frontendUrl, nodeEnv } = configureApp(app);
 
+  // Vercel injects PORT; keep 4000 for local `npm run start:prod`.
+  const port = Number(process.env.PORT) || 4000;
   await app.listen(port);
 
   logger.log(`PropertyAI API running on http://localhost:${port}`);

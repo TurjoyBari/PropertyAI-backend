@@ -18,7 +18,7 @@ export function configureApp(app: NestExpressApplication) {
   });
 
   app.enableCors({
-    origin: frontendUrl,
+    origin: true,
     credentials: true,
   });
 
