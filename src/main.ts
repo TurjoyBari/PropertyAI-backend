@@ -1,9 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
 import { AppModule } from './app.module';
+import { configureApp } from './configure-app';
 
 async function bootstrap() {
   /**
@@ -14,30 +13,8 @@ async function bootstrap() {
     bodyParser: false,
   });
 
-  const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
-
-  const frontendUrl = config.get<string>('frontendUrl', 'http://localhost:3000');
-  const port = config.get<number>('port', 4000);
-  const nodeEnv = config.get<string>('nodeEnv', 'development');
-
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-  });
-
-  app.enableCors({
-    origin: frontendUrl,
-    credentials: true,
-  });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
+  const { frontendUrl, port, nodeEnv } = configureApp(app);
 
   await app.listen(port);
 
@@ -48,4 +25,4 @@ async function bootstrap() {
   logger.log(`Uploads served at http://localhost:${port}/uploads/`);
 }
 
-bootstrap();
+void bootstrap();
