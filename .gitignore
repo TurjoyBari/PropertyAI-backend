@@ -49,3 +49,4 @@ temp/
 
 # Local uploaded images (runtime)
 /uploads/
+.vercel
