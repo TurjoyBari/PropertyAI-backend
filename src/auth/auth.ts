@@ -29,6 +29,17 @@ export async function createAuth(options: CreateAuthOptions) {
           google: {
             clientId: options.googleClientId,
             clientSecret: options.googleClientSecret,
+            prompt: 'select_account' as const,
+            // Refresh profile picture / name when the user signs in again.
+            overrideUserInfoOnSignIn: true,
+            mapProfileToUser: (profile: {
+              name?: string;
+              email?: string;
+              picture?: string;
+            }) => ({
+              name: profile.name,
+              image: profile.picture,
+            }),
           },
         }
       : undefined;
@@ -56,6 +67,19 @@ export async function createAuth(options: CreateAuthOptions) {
       sendVerificationEmail: async ({ user, url }) => {
         console.log(`[PropertyAI Auth] Verify email → ${user.email}`);
         console.log(`[PropertyAI Auth] Verify URL: ${url}`);
+      },
+    },
+    // Link Google to an existing email/password user (same email) instead of duplicates.
+    // requireLocalEmailVerified is false because email verification is optional in this app;
+    // Google is in trustedProviders (verified Google email + matching address).
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ['google'],
+        allowDifferentEmails: false,
+        updateUserInfoOnLink: true,
+        requireLocalEmailVerified: false,
+        disableImplicitLinking: false,
       },
     },
     socialProviders,
